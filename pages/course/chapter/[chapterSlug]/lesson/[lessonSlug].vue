@@ -8,33 +8,63 @@
       <NuxtLink
         v-if="lesson.sourceUrl"
         class="font-normal text-md text-gray-500"
-        :to="lesson.sourceUrl"
-      >
+        :to="lesson.sourceUrl">
         Download Source Code
       </NuxtLink>
       <NuxtLink
         v-if="lesson.downloadUrl"
         class="font-normal text-md text-gray-500"
-        :to="lesson.downloadUrl"
-      >
+        :to="lesson.downloadUrl">
         Download Video
       </NuxtLink>
     </div>
     <VideoPlayer
       v-if="lesson.videoId"
-      :videoId="lesson.videoId"
-    />
+      :videoId="lesson.videoId" />
     <p>{{ lesson.text }}</p>
     <LessonCompleteButton
       :model-value="isLessonComplete"
-      @update:model-value="toggleComplete"
-    />
+      @update:model-value="toggleComplete" />
   </div>
 </template>
 
 <script setup>
 const course = useCourse();
 const route = useRoute();
+
+definePageMeta({
+  middleware: [function ({ params }, from) {
+    const course = useCourse();
+
+    const chapter = course.chapters.find(
+      (chapter) => chapter.slug === params.chapterSlug
+    );
+
+    if (!chapter) {
+      return abortNavigation(
+        createError({
+          statusCode: 404,
+          message: 'Chapter not found'
+        })
+      );
+    };
+
+    const lesson = chapter.lessons.find(
+      (lesson) => lesson.slug === params.lessonSlug
+    );
+
+    if (!lesson) {
+      return abortNavigation(
+        createError({
+          statusCode: 404,
+          message: 'Lesson not found'
+        })
+      );
+    };
+  },
+    'auth',
+  ]
+});
 
 const chapter = computed(() => {
   return course.chapters.find(
@@ -64,7 +94,7 @@ const isLessonComplete = computed(() => {
 
   if (
     !progress.value[chapter.value.number - 1][
-      lesson.value.number - 1
+    lesson.value.number - 1
     ]
   ) {
     return false;
